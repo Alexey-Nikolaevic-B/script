@@ -1,0 +1,5 @@
+venv/
+.vs/
+Ta_Co/**
+Ta-X(Co,Ni,Cr),Cr-Ti/**
+VESTA-gtk3/**
