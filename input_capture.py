@@ -118,16 +118,30 @@ def save_actions():
     print(f"\nActions saved to: {output_filename}")
     return output_filename
 
-# Пример использования
+import os
+import subprocess
+def open_vesta(vesta_path, cif_file):
+    if os.path.exists(vesta_path) and os.access(vesta_path, os.X_OK):
+        command = [vesta_path]
+        command.append(cif_file)
+        process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return process
+
 if __name__ == "__main__":
-    # Настройки горячих клавиш
     settings = {
         'click_shortcut': keyboard.Key.num_lock,  # Fn клавиша
         'input_text_shortcut': keyboard.Key.shift,  # Shift
         'stop_recording': keyboard.Key.esc  # Esc
     }
     
+
+    vesta_path = "./VESTA-gtk3/VESTA"
+    cif_file = './Ta_Co/cif/9012196.cif'
+    open_vesta(vesta_path, cif_file)
+
     start_recording(
         filename="recorded_actions.json",
         settings=settings
     )
+
+

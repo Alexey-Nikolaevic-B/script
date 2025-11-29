@@ -1,78 +1,11 @@
 import subprocess
 import os
 import pandas as pd
-import re
 import time
-import json
-import pyautogui
-from pathlib import Path
 
-from input_capture import start_recording
 from controls import hover_and_click, click, input_text, read, press_key, get_position_by_image, hover_only
 
-def get_meta_data(path):
-    df = pd.read_excel(path)
-    
-    def parse_elements(elements_str):
-        """Парсит строку с элементами, убирая цифры из названий элементов"""
-        if pd.isna(elements_str):
-            return []
-        
-        elements = []
-        # Разделяем по пробелам и парсим каждый элемент
-        for elem_part in str(elements_str).split():
-            elem_part = elem_part.strip()
-            # Убираем цифры из названия элемента (Ta2 -> Ta, Co -> Co)
-            element_name = ''.join([char for char in elem_part if not char.isdigit()])
-            if element_name:  # Если осталось непустое название
-                elements.append((element_name, 1))  # Всегда count=1, так как цифры убраны
-        
-        return elements
-    
-    parsed_data = []
-    for idx, row in df.iterrows():
-        row_dict = row.to_dict()
-        
-        # Получаем элементы из колонок major и minor
-        original_major = row_dict.get('major', '')
-        original_minor = row_dict.get('minor', '')
-        prototype_major = row_dict.get('prototype major', '')
-        prototype_minor = row_dict.get('prototype minor', '')
-        
-        # Создаем строку элементов для отображения (без цифр)
-        if original_major and original_minor:
-            # Убираем цифры из названий элементов
-            major_clean = ''.join([char for char in str(original_major) if not char.isdigit()])
-            minor_clean = ''.join([char for char in str(original_minor) if not char.isdigit()])
-            row_dict['elements_parsed'] = f"{major_clean} {minor_clean}"
-        else:
-            row_dict['elements_parsed'] = ""
-        
-        # Сохраняем major и minor элементы в нужном формате
-        major_clean = ''.join([char for char in str(original_major) if not char.isdigit()]) if original_major else None
-        minor_clean = ''.join([char for char in str(original_minor) if not char.isdigit()]) if original_minor else None
-        proto_major_clean = ''.join([char for char in str(prototype_major) if not char.isdigit()]) if prototype_major else ''
-        proto_minor_clean = ''.join([char for char in str(prototype_minor) if not char.isdigit()]) if prototype_minor else ''
-        
-        row_dict['major_element'] = [major_clean, proto_major_clean]
-        row_dict['minor_element'] = [minor_clean, proto_minor_clean]
-        
-        lattice_params = ['a', 'b', 'c']
-        for param in lattice_params:
-            if param in row_dict:
-                if pd.notna(row_dict[param]) and row_dict[param] not in ['', 'None', None]:
-                    row_dict[param] = str(row_dict[param])
-                else:
-                    row_dict[param] = ""
-        
-        if 'prototype' in row_dict and pd.notna(row_dict['prototype']):
-            prototype_str = str(row_dict['prototype'])
-            if not prototype_str.endswith('.cif'):
-                row_dict['prototype'] = prototype_str + '.cif'
-        
-        parsed_data.append(row_dict)
-    
-    return parsed_data
+from utils import get_meta_data, delete_all_files
 
 def open_vesta(vesta_path, cif_file):
     if os.path.exists(vesta_path) and os.access(vesta_path, os.X_OK):
@@ -81,23 +14,9 @@ def open_vesta(vesta_path, cif_file):
         process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return process
 
-def close_vesta():
-    try:
-        pyautogui.hotkey('ctrl', 'q')
-        time.sleep(1)
-        pyautogui.press('enter')
-        time.sleep(1)
-        return True
-        
-    except Exception as e:
-        print(f"Ошибка при закрытии VESTA: {e}")
-        return False
-
 def play_scenario(item):
-    """Функция воспроизведения сценария для конкретного сплава"""
-    click(position=[140, 74], hover_time=0.5)
-    hover_and_click(position=[174, 145], speed=10.0, hover_time=0.2)
-    hover_and_click(position=[426, 146], speed=10.0, hover_time=0.2)
+    
+    press_key('ctrl', 'e')
     click(position=[1015, 605], hover_time=0.0, number=3, sleep=0.01)
     input_text(str(item['name']))
 
@@ -107,9 +26,11 @@ def play_scenario(item):
     if item.get('a'):
         click(position=[1146, 969], hover_time=0.0, number=1, sleep=0.05)
         input_text(str(item.get('a', '')))
+    click(position=[1347, 752], hover_time=0.0, number=1, sleep=0.05)
     if item.get('b'):
         click(position=[1233, 962], hover_time=0.0, number=1, sleep=0.05)
         input_text(str(item.get('b', '')))
+    click(position=[1347, 752], hover_time=0.0, number=1, sleep=0.05)
     if item.get('c'):
         click(position=[1281, 962], hover_time=0.0, number=1, sleep=0.05)
         input_text(str(item.get('c', '')))
@@ -117,46 +38,45 @@ def play_scenario(item):
     click(position=[1189, 521], hover_time=0.0, number=1, sleep=0.05)
 
     # Change lattice names:
-    # первое поле
-    click(position=[996, 811], hover_time=0.0, number=3, sleep=0.01)
+    click(position=[999, 814], hover_time=0.0, number=1, sleep=0.05)
+    click(position=[1299, 618], hover_time=0.0, number=1, sleep=0.05)
     current_text = read()
     if current_text == item['major_element'][1]:
-        input_text(str(item['major_element'][0]))
+        element = str(item['major_element'][0])
     elif current_text == item['minor_element'][1]:
-        input_text(str(item['minor_element'][0]))
-    # второе поле  
-    click(position=[1052, 811], hover_time=0.0, number=3, sleep=0.01)
-    current_text = read()
-    if current_text == item['major_element'][1]:
-        input_text(str(item['major_element'][0]))
-    elif current_text == item['minor_element'][1]:
-        input_text(str(item['minor_element'][0]))
-    # третье поле
-    click(position=[991, 830], hover_time=0.0, number=3, sleep=0.01)
-    current_text = read()
-    if current_text == item['major_element'][1]:
-        input_text(str(item['major_element'][0]))
-    elif current_text == item['minor_element'][1]:
-        input_text(str(item['minor_element'][0]))
-    # четвертое поле
-    click(position=[1039, 832], hover_time=0.0, number=3, sleep=0.01)
-    current_text = read()
-    if current_text == item['major_element'][1]:
-        input_text(str(item['major_element'][0]))
-    elif current_text == item['minor_element'][1]:
-        input_text(str(item['minor_element'][0]))
+        element = str(item['minor_element'][0])
 
+    click(position=[1299, 618], hover_time=0.0, number=1, sleep=0.05)
+    input_text(element)
+    click(position=[1414, 612], hover_time=0.0, number=1, sleep=0.05)
+    input_text(element)
+
+
+    click(position=[991, 830], hover_time=0.0, number=1, sleep=0.01)
+    click(position=[1306, 612], hover_time=0.0, number=1, sleep=0.05)
+    current_text = read()
+    if current_text == item['major_element'][1]:
+        element = str(item['major_element'][0])
+    elif current_text == item['minor_element'][1]:
+        element = str(item['minor_element'][0])
+
+    click(position=[1306, 612], hover_time=0.0, number=1, sleep=0.05)
+    input_text(element)
+    click(position=[1405, 610], hover_time=0.0, number=1, sleep=0.05)
+    input_text(element)
+
+
+    # Supercell
     click(position=[1049, 539], hover_time=0.0, number=1, sleep=0.05)
 
     click(position=[1093, 857], hover_time=0.0, number=1, sleep=0.05)
 
-    # Supercell
     click(position=[950, 652], hover_time=0.0, number=1, sleep=0.05)
-    input_text('2')
+    input_text(item['super_cell'])
     click(position=[995, 683], hover_time=0.0, number=1, sleep=0.05)
-    input_text('2')
+    input_text(item['super_cell'])
     click(position=[1061, 732], hover_time=0.0, number=1, sleep=0.05)
-    input_text('2')
+    input_text(item['super_cell'])
 
     click(position=[1355, 958], hover_time=0.0, number=1, sleep=0.05)
     click(position=[1526, 818], hover_time=0.0, number=1, sleep=0.05)
@@ -164,20 +84,29 @@ def play_scenario(item):
     click(position=[1308, 842], hover_time=0.0, number=1, sleep=0.05)
     click(position=[1432, 1084], hover_time=0.0, number=1, sleep=0.05)
 
-    press_key('ctrl', 'shift', 's')
-    save_path = f"{item.get('name')}"
+    click(position=[87, 72], hover_time=0.0, number=1, sleep=0.05)
+    click(position=[174, 248], hover_time=0.0, number=1, sleep=0.05)
+    click(position=[1902, 1187], hover_time=0.0, number=1, sleep=0.05)
+    click(position=[1857, 1380], hover_time=0.0, number=1, sleep=0.05)
+
+    save_path = f"./vesta/{item.get('name')}"
     click(position=[1316, 330], hover_time=0.0, number=1, sleep=0.05)
-    click(position=[1306, 390], hover_time=0.0, number=2, sleep=0.05)
     input_text(save_path)
+    time.sleep(0.9)
     press_key('enter')
+    time.sleep(0.9)
+    press_key('enter')
+    click(position=[1306, 190], hover_time=0.0, number=2, sleep=0.05)
     press_key('ctrl', 'q')
+    time.sleep(0.1)
+    click(position=[1344, 779], hover_time=0.0, number=1, sleep=0.05)
 
 if __name__ == "__main__":
-    create_recording = True
 
     element = 'Ta_Co'
-    meta_data_path = f"./{element}/meta.xlsx"
+    meta_data_path = f"./{element}/data.xlsx"
     meta_data = get_meta_data(meta_data_path)
+    
     
     print("=== PARSED DATA ===")
     for idx, item in enumerate(meta_data):
@@ -195,11 +124,12 @@ if __name__ == "__main__":
 
     vesta_path = "./VESTA-gtk3/VESTA"
 
+    delete_all_files(f'{element}/vesta')
+
     for item in meta_data:
-        print(f"Processing {item.get('alloy')}...")
+        print(f"Processing {item.get('name')}...")
         
         prototype_file = item.get('prototype', '')
-
         cif_file = f"./{element}/cif/{prototype_file}"
     
         vesta_process = open_vesta(vesta_path, cif_file)
