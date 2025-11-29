@@ -101,15 +101,29 @@ def play_scenario(item):
     time.sleep(0.1)
     click(position=[1344, 779], hover_time=0.0, number=1, sleep=0.05)
 
+def cif_to_xyz(vesta_path, CIF_FOLDER, data):
+
+    for item in data:
+        print(f"Processing {item.get('name')}...")
+        
+        prototype_file = item.get('prototype', '')
+        cif_file = f"{CIF_FOLDER}/{prototype_file}"
+    
+        vesta_process = open_vesta(vesta_path, cif_file)
+        time.sleep(2)
+
+        play_scenario(item)
+
+
 if __name__ == "__main__":
 
     element = 'Ta_Co'
-    meta_data_path = f"./{element}/data.xlsx"
-    meta_data = get_meta_data(meta_data_path)
+    data_path = f"./{element}/data.xlsx"
+    data = get_meta_data(data_path)
     
     
     print("=== PARSED DATA ===")
-    for idx, item in enumerate(meta_data):
+    for idx, item in enumerate(data):
         print(f"Alloy № {idx}:")
         print(f"  Alloy: {item.get('name')}")
         print(f"  Elements: {item.get('elements')}")
@@ -126,7 +140,7 @@ if __name__ == "__main__":
 
     delete_all_files(f'{element}/vesta')
 
-    for item in meta_data:
+    for item in data:
         print(f"Processing {item.get('name')}...")
         
         prototype_file = item.get('prototype', '')

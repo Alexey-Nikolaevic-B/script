@@ -162,6 +162,7 @@ def edit_data_files(output_dir, meta_data):
     print("=" * 50)
     print(f"Successfully edited: {edited_count}/{len(data_files)} files")
 
+
 def parse_meta_data_for_editing(meta_data_path):
     """Parse meta data specifically for editing data files"""
     meta_data = get_meta_data(meta_data_path)
@@ -198,6 +199,17 @@ def parse_meta_data_for_editing(meta_data_path):
                 item['super_cell_parsed'] = [1, 1, 1]
     
     return meta_data
+
+
+def xyz_to_data(xyz_files_path, output_dir, script_path, data):
+    element = 'Ta_Co'
+
+    xyz_files_path = f"./{element}/vesta/*.xyz"
+    output_dir = f"./{element}/lammps"
+    
+    genereate_data_files(xyz_files_path, output_dir, script_path)    
+    edit_data_files(output_dir, data)
+
 
 if __name__ == "__main__":
     element = 'Ta_Co'

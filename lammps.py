@@ -42,6 +42,25 @@ def run_lammps_simulation(run_dir, lammps_executable):
         return True
     except:
         return False
+    
+
+def simulate(template_lammps_path, element1, element2, run_dir):
+    os.makedirs(run_dir, exist_ok=True)
+    
+    lammps_script = generate_lammps_script(
+        template_lammps_path=template_lammps_path,
+        run_dir=run_dir,
+        element1=element1,
+        element2=element2,
+        data_file='CoTa2.data',
+        library_file='library.meam', 
+        cross_potential_file='CoTa.meam',
+        cohesive_e1=-3.7,
+        cohesive_e2=-8.1
+    )
+    
+    print(f"✅ Generated: {lammps_script}")
+    run_lammps_simulation(run_dir, "lmp")
 
 if __name__ == "__main__":
     template_lammps_path = './template_formation.txt'
@@ -49,7 +68,6 @@ if __name__ == "__main__":
     element2 = 'Ta'
     run_dir = f'./{element2}_{element1}/lammps'
     
-    # Create directory if it doesn't exist
     os.makedirs(run_dir, exist_ok=True)
     
     lammps_script = generate_lammps_script(
