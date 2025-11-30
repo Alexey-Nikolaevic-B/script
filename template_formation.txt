@@ -50,6 +50,7 @@ timestep              ${Timestep} # time_step=0.001ps=1fs :Ref[1]
 #-----------------------------------------#
 dump                   Min all atom 100 {ELEMENT1}{ELEMENT2}_min.atom
 min_style              cg  
+thermo 1  # Print every step during minimization
 minimize               1e-25 1e-25 10000 10000
 undump                 Min
 reset_timestep	       0
@@ -97,6 +98,7 @@ variable              Etot equal v_Totenergy/v_N
 variable              formation_energy equal -(v_Etot-v_n*v_Ec{ELEMENT1}-v_m*v_Ec{ELEMENT2})/(22*(v_n+v_m))
 variable              heat_formation equal (v_Etot*v_N-v_N1*c_E1-v_N2*c_E2)/(v_N)
 thermo_style          custom step temp press etotal v_Etot c_E1 c_E2 v_formation_energy v_heat_formation v_lengtha v_lengthc 
+thermo 1  # Print every step during dynamics
 
 #---------------------Dynamic run
 run                   10000 # 1 ps

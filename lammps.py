@@ -6,83 +6,61 @@ def generate_lammps_script(template_lammps_path, run_dir, element1, element2, da
     with open(template_lammps_path, 'r') as f:
         template = f.read()
 
-    template = template.replace('{Timestep}', '{{Timestep}}')
-    template = template.replace('{Temperature}', '{{Temperature}}')
+    # Use simple string replacement for ALL variables
+    replacements = {
+        '{ELEMENT1_NUMBER}': f"{element1}1",
+        '{ELEMENT2_NUMBER}': f"{element2}2",
+        '{ELEMENT1}': element1,
+        '{ELEMENT2}': element2,
+        '{DATA_FILE}': data_file,
+        '{LIBRARY_FILE}': library_file,
+        '{CROSS_POTENTIAL_FILE}': cross_potential_file,
+        '{COHESIVE_E1}': str(cohesive_e1),
+        '{COHESIVE_E2}': str(cohesive_e2),
+        # Remove these variable placeholders and use direct values
+        '${Timestep}': '0.001',
+        '{Timestep}': '0.001',
+        '${Temperature}': '300',
+        '{Temperature}': '300'
+    }
     
-    script = template.format(
-        ELEMENT1_NUMBER=f"{element1}1",
-        ELEMENT2_NUMBER=f"{element2}2",
-        ELEMENT1=element1,
-        ELEMENT2=element2,
-        DATA_FILE=data_file,
-        LIBRARY_FILE=library_file,
-        CROSS_POTENTIAL_FILE=cross_potential_file,
-        COHESIVE_E1=cohesive_e1,
-        COHESIVE_E2=cohesive_e2
-    )
+    for old, new in replacements.items():
+        template = template.replace(old, new)
 
-    script = script.replace('{{Timestep}}', '{Timestep}')
-    script = script.replace('{{Temperature}}', '{Temperature}')
+    print('--------------------------------------------------------------------------------------------------------------------------------', data_file)
     
     output_path = os.path.join(run_dir, 'formation.lmp')
     with open(output_path, 'w') as f:
-        f.write(script)
+        f.write(template)
     
     return output_path
 
-def run_lammps_simulation(run_dir, lammps_executable):
+
+def run_lammps_simulation(run_dir):
     lammps_file = os.path.join(run_dir, 'formation.lmp')
-    print(f"🚀 Running: {os.path.basename(lammps_file)}")
+    print(f"Running: {os.path.basename(lammps_file)}")
     
     try:
-        result = subprocess.Popen(
+        result = subprocess.run(
             ["lmp", "-in", "formation.lmp"],
-            cwd=run_dir,
-            stdout=subprocess.DEVNULL, 
-            stderr=subprocess.DEVNULL
+            cwd=run_dir
         )
         return True
     except:
         return False
     
 
-def simulate(template_lammps_path, element1, element2, run_dir):
-    os.makedirs(run_dir, exist_ok=True)
-    
+def simulate(template_lammps_path, element1, element2, run_dir, alloy_data, cross_potential_file):
     lammps_script = generate_lammps_script(
         template_lammps_path=template_lammps_path,
         run_dir=run_dir,
         element1=element1,
         element2=element2,
-        data_file='CoTa2.data',
+        data_file=alloy_data,
         library_file='library.meam', 
-        cross_potential_file='CoTa.meam',
+        cross_potential_file=cross_potential_file,
         cohesive_e1=-3.7,
         cohesive_e2=-8.1
     )
     
-    print(f"✅ Generated: {lammps_script}")
-    run_lammps_simulation(run_dir, "lmp")
-
-if __name__ == "__main__":
-    template_lammps_path = './template_formation.txt'
-    element1 = 'Co'
-    element2 = 'Ta'
-    run_dir = f'./{element2}_{element1}/lammps'
-    
-    os.makedirs(run_dir, exist_ok=True)
-    
-    lammps_script = generate_lammps_script(
-        template_lammps_path=template_lammps_path,
-        run_dir=run_dir,
-        element1=element1,
-        element2=element2,
-        data_file='CoTa2.data',
-        library_file='library.meam', 
-        cross_potential_file='CoTa.meam',
-        cohesive_e1=-3.7,
-        cohesive_e2=-8.1
-    )
-    
-    print(f"✅ Generated: {lammps_script}")
-    run_lammps_simulation(run_dir, "lmp")
+    run_lammps_simulation(run_dir)
