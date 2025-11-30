@@ -37,7 +37,9 @@ def run_lammps_simulation(run_dir, lammps_executable):
     try:
         result = subprocess.Popen(
             ["lmp", "-in", "formation.lmp"],
-            cwd=run_dir
+            cwd=run_dir,
+            stdout=subprocess.DEVNULL, 
+            stderr=subprocess.DEVNULL
         )
         return True
     except:

@@ -14,7 +14,7 @@ def open_vesta(vesta_path, cif_file):
         process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return process
 
-def play_scenario(item):
+def play_scenario(item, save_path):
     
     press_key('ctrl', 'e')
     click(position=[1015, 605], hover_time=0.0, number=3, sleep=0.01)
@@ -89,7 +89,6 @@ def play_scenario(item):
     click(position=[1902, 1187], hover_time=0.0, number=1, sleep=0.05)
     click(position=[1857, 1380], hover_time=0.0, number=1, sleep=0.05)
 
-    save_path = f"./vesta/{item.get('name')}"
     click(position=[1316, 330], hover_time=0.0, number=1, sleep=0.05)
     input_text(save_path)
     time.sleep(0.9)
@@ -101,18 +100,11 @@ def play_scenario(item):
     time.sleep(0.1)
     click(position=[1344, 779], hover_time=0.0, number=1, sleep=0.05)
 
-def cif_to_xyz(vesta_path, CIF_FOLDER, data):
 
-    for item in data:
-        print(f"Processing {item.get('name')}...")
-        
-        prototype_file = item.get('prototype', '')
-        cif_file = f"{CIF_FOLDER}/{prototype_file}"
-    
-        vesta_process = open_vesta(vesta_path, cif_file)
-        time.sleep(2)
-
-        play_scenario(item)
+def cif_to_xyz(vesta_path, cif_path, item, save_path):
+    vesta_process = open_vesta(vesta_path, cif_path)
+    time.sleep(2)
+    play_scenario(item, save_path)
 
 
 if __name__ == "__main__":

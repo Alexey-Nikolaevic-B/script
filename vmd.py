@@ -82,12 +82,12 @@ def calculate_box_dimensions(item):
     a = item.get('a', 1.0)
     b = item.get('b', 1.0)
     c = item.get('c', 1.0)
+
+    super_cell = item.get('super_cell')
     
-    super_cell = item.get('super_cell_parsed', [1, 1, 1])
-    
-    xhi = round_up_to_tenths(float(a) * super_cell[0]) if a else 1.0
-    yhi = round_up_to_tenths(float(b) * super_cell[1]) if b else 1.0
-    zhi = round_up_to_tenths(float(c) * super_cell[2]) if c else 1.0
+    xhi = round_up_to_tenths(float(a) * super_cell)
+    yhi = round_up_to_tenths(float(b) * super_cell)
+    zhi = round_up_to_tenths(float(c) * super_cell)
     
     return {
         'xlo_xhi': f"0.000000 {xhi:.6f}",
@@ -96,8 +96,6 @@ def calculate_box_dimensions(item):
     }
 
 def edit_data_files(output_dir, meta_data):
-    """Edit LAMMPS data files to correct box dimensions from Excel"""
-    
     data_files = glob.glob(os.path.join(output_dir, "*.data"))
     
     if not data_files:
@@ -202,10 +200,6 @@ def parse_meta_data_for_editing(meta_data_path):
 
 
 def xyz_to_data(xyz_files_path, output_dir, script_path, data):
-    element = 'Ta_Co'
-
-    xyz_files_path = f"./{element}/vesta/*.xyz"
-    output_dir = f"./{element}/lammps"
     
     genereate_data_files(xyz_files_path, output_dir, script_path)    
     edit_data_files(output_dir, data)

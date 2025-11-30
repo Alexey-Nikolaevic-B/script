@@ -1,11 +1,13 @@
 import os
 import pandas as pd
+import shutil
 
 from vesta import cif_to_xyz
 from vmd import xyz_to_data
 from lammps import simulate
 
 from utils import get_meta_data
+
 
 VESTA_LAUNCHER_PATH = './VESTA-gtk3/VESTA'
 VMD_SCRIPT_PATH = './vmd_convert.tcl'
@@ -82,15 +84,34 @@ def run_sim(selected_folder):
         print(f"  Prototype: {item.get('prototype')}")
         print()
 
-    cif_path = f'./{selected_folder}/{CIF_FOLDER}'
-    cif_to_xyz(VESTA_LAUNCHER_PATH, cif_path, data)
+    meam_file = f'{selected_folder}/CoTa.meam'
+    library_file = f'{selected_folder}/library.meam'
 
-    xyz_path = f'./{selected_folder}/{VESTA_FOLDER}'
-    data_path = f'./{selected_folder}/{LAMMPS_FOLDER}'
-    xyz_to_data(xyz_path, data_path, VMD_SCRIPT_PATH, data)
-    
-    lammps_path = f'./{selected_folder}/{LAMMPS_FOLDER}'
-    simulate(LAMMPS_TEMLPATE, item.get('major_element')[0], item.get('minor_element')[0], lammps_path)
+    for idx, item in enumerate(data):
+
+        if not item.get('simulate', False):
+            print(f"⏭️ Skipping {item.get('name')} - simulate=False")
+            continue
+
+        alloy = item.get('name')
+        major = item.get('major_element')[0]
+        minor = item.get('minor_element')[0]
+        new_folder = f'{BASE_PATH}/{major}_{minor}/{alloy}'
+        os.makedirs(new_folder, exist_ok=True)
+
+        shutil.copy2(meam_file, new_folder)
+        shutil.copy2(library_file, new_folder)
+
+        prototype= item.get('prototype')
+        cif_path = f'{BASE_PATH}/{major}_{minor}/{CIF_FOLDER}/{prototype}'
+        save_path = f'./{alloy}/{alloy}'
+
+        cif_to_xyz(VESTA_LAUNCHER_PATH, cif_path, item, save_path)
+        
+        xyz_path = f'{BASE_PATH}/{major}_{minor}/{alloy}/{alloy}.xyz'
+        xyz_to_data(xyz_path, new_folder, VMD_SCRIPT_PATH, data)
+
+        simulate(LAMMPS_TEMLPATE, item.get('major_element')[0], item.get('minor_element')[0], new_folder)
    
 if __name__ == '__main__':
     element1 = ''
