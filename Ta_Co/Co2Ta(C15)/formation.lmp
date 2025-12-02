@@ -1,0 +1,107 @@
+#---------------------------------------------------------------------#
+#---------- Simulation of Co1Ta2 in triclinic (P1) ----#
+#-------------------- Writer:: Your Name ----------------------------#
+#-------------------- Temperature: 300 Kelvin -----------------------#
+#---------------------------------------------------------------------#
+
+#---------------------Define initial value
+variable              Temperature equal 300     # 300 K
+variable              Pressure    equal 1.01325 # 1.01325 bar
+variable              Timestep    equal 0.001   # 0.001 ps=1 fs::Ref[1]
+
+#-----------------------------------------------------------#
+#----------------------Initialization-----------------------#
+#-----------------------------------------------------------#
+
+#----------------------Define units, atom_style, dimension and boundary
+echo                   both
+units                  metal
+dimension              3
+boundary               p p p
+atom_style             full
+
+#----------------------Define neighbor Algorithm and neighbor list 
+neighbor               2.0 bin 
+neigh_modify           delay 0 every 1 check yes
+read_data              Co2Ta(C15).data
+
+#----------------------Define groups for simulation
+group                  Co  type 1
+group                  Ta  type 2
+
+#-----------------------------------------------------------------------------------#
+#----------------------Setup interaction potentials between ions--------------------#
+#-----------------------------------------------------------------------------------#
+
+pair_style             meam 
+pair_coeff             * * library.meam Co Ta CoTa.meam Co Ta
+
+#--------------------------------------------------------------------------------------#
+#----Setting velocity, thermostep, thermo_style, timestep and other necessary setup----#
+#--------------------------------------------------------------------------------------#
+#---------------------Define thermo_style order to chose thermodynamic variable for save
+thermo_style          custom   step  temp   press   ke  pe  etotal 
+
+#---------------------Define simulation time step 
+timestep              ${Timestep} # time_step=0.001ps=1fs :Ref[1]
+
+#-----------------------------------------#
+#-------- Minimization protocols ---------#
+#-----------------------------------------#
+dump                   Min all atom 100 CoTa_min.atom
+min_style              cg  
+thermo 1  # Print every step during minimization
+minimize               1e-25 1e-25 10000 10000
+undump                 Min
+reset_timestep	       0
+
+#-------------------------------------------------------------#
+#---- Dynamic stage: Calculation enthalpy in NVT ensemble ----#
+#-------------------------------------------------------------#
+
+#---------------------Set canonical ensemble(NVT) in T=${Temperature}
+fix                   NVT_Equilibrium_Final all nvt temp ${Temperature} ${Temperature} 0.1 
+
+#---------------------Save the trajectories with dump command in Equilibrium stage
+dump                  Equilibrium.NVT.Final all atom 100 Equilibrium.NVT.Final.atom
+
+#-----------------------------------------------------#
+#-------------- Calculation enthalpy -----------------#
+#-----------------------------------------------------#
+
+#---------------------Calculation potentials energy per atoms  
+compute               Potentials_energy_per_atoms_vector all pe/atom 
+variable              PD atom c_Potentials_energy_per_atoms_vector            # PD= Potentials_energy_per_atoms_vector for dump
+compute               Potentials_energy all reduce sum c_Potentials_energy_per_atoms_vector
+variable              N equal "count(all)"
+variable              N1 equal count(Co)
+variable              N2 equal count(Ta) 
+variable              n equal 1        # Co_nTa_m
+variable              m equal 2
+compute               ECo Co pe/atom
+compute               ETa Ta pe/atom
+compute               E1 Co reduce sum c_ECo
+compute               E2 Ta reduce sum c_ETa
+variable              Potentials_energy_per_atoms_scaller equal "c_Potentials_energy/v_N" 
+variable              Totenergy equal etotal                               #Kinetic+Potentials   
+
+#---------------------Calculation Temperature 
+compute               TEMPERATURE all   temp
+variable              TEMPERATURE equal "c_TEMPERATURE" 
+
+#---------------------Calculation formation Energy and heat of formation
+variable              lengtha equal "lx/3"
+variable              lengthc equal "lz/3"
+variable              EcCo equal -3.7  	 #Cohesive energy of Co
+variable              EcTa equal -8.1           #Cohesive energy of Ta
+variable              Etot equal v_Totenergy/v_N
+variable              formation_energy equal -(v_Etot-v_n*v_EcCo-v_m*v_EcTa)/(22*(v_n+v_m))
+variable              heat_formation equal (v_Etot*v_N-v_N1*c_E1-v_N2*c_E2)/(v_N)
+thermo_style          custom step temp press etotal v_Etot c_E1 c_E2 v_formation_energy v_heat_formation v_lengtha v_lengthc 
+thermo 1  # Print every step during dynamics
+
+#---------------------Dynamic run
+run                   10000 # 1 ps
+
+#--------------------Print flag order to show simulation is successful
+print                "SIMULATION IS SUCCESSFUL DONE"

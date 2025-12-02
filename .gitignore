@@ -1,6 +1,5 @@
 venv/
 .vs/
-Ta_Co/**
 Ta-X(Co,Ni,Cr),Cr-Ti/**
 _src/VESTA-gtk3/**
 _scr/vmd-1.9.2/**
