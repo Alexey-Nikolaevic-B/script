@@ -9,6 +9,24 @@ def get_meta_data(path):
     for idx, row in df.iterrows():
         row_dict = row.to_dict()
         
+        if 'run_simulation' in row_dict:
+            run_sim = row_dict['run_simulation']
+            
+            if isinstance(run_sim, bool):
+                row_dict['run_simulation'] = run_sim
+            elif isinstance(run_sim, str):
+                cleaned = run_sim.strip().strip('"\'')
+                if cleaned.lower() in ['true', 'yes', '1', 'да']:
+                    row_dict['run_simulation'] = True
+                elif cleaned.lower() in ['false', 'no', '0', 'нет']:
+                    row_dict['run_simulation'] = False
+                else:
+                    row_dict['run_simulation'] = False
+            elif isinstance(run_sim, (int, float)):
+                row_dict['run_simulation'] = bool(run_sim)
+            else:
+                row_dict['run_simulation'] = False
+        
         original_major = row_dict.get('major_element', '')
         original_minor = row_dict.get('minor_element', '')
         prototype_major = row_dict.get('proto_major', '')

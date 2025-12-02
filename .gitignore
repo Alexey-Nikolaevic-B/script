@@ -2,6 +2,6 @@ venv/
 .vs/
 Ta_Co/**
 Ta-X(Co,Ni,Cr),Cr-Ti/**
-VESTA-gtk3/**
-vmd-1.9.2/*
+_src/VESTA-gtk3/**
+_scr/vmd-1.9.2/**
 __pycache__/

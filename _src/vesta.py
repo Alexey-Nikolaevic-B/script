@@ -1,7 +1,7 @@
 import subprocess
 import os
 import time
-from controls import click, input_text, press_key
+from _src.controls import click, input_text, press_key
 
 def launch_vesta(vesta_path, cif_file):
     command = [vesta_path, cif_file]

@@ -18,10 +18,10 @@ def generate_lammps_script(template_lammps_path, run_dir, element1, element2, da
         '{COHESIVE_E1}': str(cohesive_e1),
         '{COHESIVE_E2}': str(cohesive_e2),
         # Remove these variable placeholders and use direct values
-        '${Timestep}': '0.001',
-        '{Timestep}': '0.001',
-        '${Temperature}': '300',
-        '{Temperature}': '300'
+        # '${Timestep}': '0.001',
+        # '{Timestep}': '0.001',
+        # '${Temperature}': '300',
+        # '{Temperature}': '300'
     }
     
     for old, new in replacements.items():
