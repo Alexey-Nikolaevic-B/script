@@ -1,0 +1,157 @@
+LAMMPS (20 Nov 2019)
+#---------------------------------------------------------------------#
+#---------- Simulation of Co1Ta2 in triclinic (P1) ----#
+#-------------------- Writer:: Your Name ----------------------------#
+#-------------------- Temperature: 300 Kelvin -----------------------#
+#---------------------------------------------------------------------#
+
+#---------------------Define initial value
+variable              Temperature equal 300     # 300 K
+variable              Pressure    equal 1.01325 # 1.01325 bar
+variable              Timestep    equal 0.001   # 0.001 ps=1 fs::Ref[1]
+
+#-----------------------------------------------------------#
+#----------------------Initialization-----------------------#
+#-----------------------------------------------------------#
+
+#----------------------Define units, atom_style, dimension and boundary
+echo                   both
+units                  metal
+dimension              3
+boundary               p p p
+atom_style             full
+
+#----------------------Define neighbor Algorithm and neighbor list
+neighbor               2.0 bin
+neigh_modify           delay 0 every 1 check yes
+read_data              Co2Ta(C36).data
+  orthogonal box = (-0.42101 -0.42101 -0.7285) to (18.679 18.679 61.2715)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  1536 atoms
+  scanning bonds ...
+  4 = max bonds/atom
+  scanning angles ...
+  15 = max angles/atom
+  scanning dihedrals ...
+  24 = max dihedrals/atom
+  reading bonds ...
+  1584 bonds
+  reading angles ...
+  3612 angles
+  reading dihedrals ...
+  6451 dihedrals
+  6 = max # of 1-2 neighbors
+  10 = max # of 1-3 neighbors
+  36 = max # of 1-4 neighbors
+  42 = max # of special neighbors
+  special bonds CPU = 0.00130418 secs
+  read_data CPU = 0.0170497 secs
+
+#----------------------Define groups for simulation
+group                  Co  type 1
+1024 atoms in group Co
+group                  Ta  type 2
+512 atoms in group Ta
+
+#-----------------------------------------------------------------------------------#
+#----------------------Setup interaction potentials between ions--------------------#
+#-----------------------------------------------------------------------------------#
+
+pair_style             meam
+pair_coeff             * * library.meam Co Ta Ta_Co.meam Co Ta
+
+#--------------------------------------------------------------------------------------#
+#----Setting velocity, thermostep, thermo_style, timestep and other necessary setup----#
+#--------------------------------------------------------------------------------------#
+#---------------------Define thermo_style order to chose thermodynamic variable for save
+thermo_style          custom   step  temp   press   ke  pe  etotal
+
+#---------------------Define simulation time step
+timestep              ${Timestep} # time_step=0.001ps=1fs :Ref[1]
+timestep              0.001 
+
+#-----------------------------------------#
+#-------- Minimization protocols ---------#
+#-----------------------------------------#
+dump                   Min all atom 100 CoTa_min.atom
+min_style              cg
+thermo 1  # Print every step during minimization
+minimize               1e-25 1e-25 10000 10000
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:226)
+WARNING: Bonds are defined but no bond style is set (src/force.cpp:205)
+WARNING: Likewise 1-2 special neighbor interactions != 1.0 (src/force.cpp:207)
+WARNING: Angles are defined but no angle style is set (src/force.cpp:210)
+WARNING: Likewise 1-3 special neighbor interactions != 1.0 (src/force.cpp:212)
+WARNING: Dihedrals are defined but no dihedral style is set (src/force.cpp:215)
+WARNING: Likewise 1-4 special neighbor interactions != 1.0 (src/force.cpp:217)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 7
+  ghost atom cutoff = 7
+  binsize = 3.5, bins = 6 6 18
+  2 neighbor lists, perpetual/occasional/extra = 2 0 0
+  (1) pair meam, perpetual
+      attributes: full, newton on
+      pair build: full/bin
+      stencil: full/bin/3d
+      bin: standard
+  (2) pair meam, perpetual, half/full from (1)
+      attributes: half, newton on
+      pair build: halffull/newton
+      stencil: none
+      bin: none
+Per MPI rank memory allocation (min/avg/max) = 30.42 | 30.42 | 30.42 Mbytes
+Step Temp Press KinEng PotEng TotEng 
+       0            0   -59530.439            0   -5748.0772   -5748.0772 
+       1            0   -59126.018            0   -5891.7637   -5891.7637 
+       2            0   -99155.126            0   -5939.5961   -5939.5961 
+       3            0   -79703.674            0   -5987.8063   -5987.8063 
+       4            0   -86426.083            0   -6041.5167   -6041.5167 
+       5            0   -83309.447            0   -6086.6451   -6086.6451 
+       6            0   -78201.536            0   -6131.5141   -6131.5141 
+       7            0   -74644.608            0   -6176.5411   -6176.5411 
+       8            0   -72751.007            0   -6222.5772   -6222.5772 
+       9            0   -63837.739            0   -6261.9588   -6261.9588 
+      10            0   -65463.293            0   -6281.6291   -6281.6291 
+      11            0   -65387.477            0   -6296.8576   -6296.8576 
+      12            0   -64524.874            0   -6319.4103   -6319.4103 
+      13            0   -55730.184            0   -6353.1149   -6353.1149 
+      14            0   -52986.148            0    -6383.359    -6383.359 
+      15            0   -49883.045            0   -6403.3695   -6403.3695 
+      16            0   -53035.843            0   -6423.9821   -6423.9821 
+      17            0   -51658.545            0   -6442.1367   -6442.1367 
+      18            0   -48170.027            0   -6456.9883   -6456.9883 
+      19            0   -45972.961            0   -6473.6357   -6473.6357 
+      20            0   -41963.132            0   -6490.6286   -6490.6286 
+      21            0   -40520.711            0   -6505.9816   -6505.9816 
+      22            0   -39960.457            0   -6527.2127   -6527.2127 
+      23            0    -36222.65            0    -6548.935    -6548.935 
+      24            0   -34942.574            0   -6565.9625   -6565.9625 
+      25            0   -29892.259            0   -6581.3309   -6581.3309 
+      26            0   -30643.796            0   -6598.1929   -6598.1929 
+      27            0   -33302.953            0   -6613.9491   -6613.9491 
+      28            0   -30452.262            0   -6631.6349   -6631.6349 
+      29            0   -29968.295            0   -6650.6642   -6650.6642 
+      30            0   -28157.283            0    -6667.295    -6667.295 
+      31            0   -26335.503            0    -6684.327    -6684.327 
+      32            0   -28264.009            0   -6701.6491   -6701.6491 
+      33            0   -25288.001            0   -6717.1329   -6717.1329 
+      34            0   -25966.367            0   -6731.5608   -6731.5608 
+      35            0   -25644.655            0   -6747.4427   -6747.4427 
+      36            0   -28308.016            0   -6764.1844   -6764.1844 
+      37            0   -25671.094            0   -6781.6389   -6781.6389 
+      38            0   -20866.477            0   -6799.1962   -6799.1962 
+      39            0    -21027.88            0   -6816.4792   -6816.4792 
+      40            0   -20343.891            0   -6829.7609   -6829.7609 
+      41            0   -20921.706            0    -6846.793    -6846.793 
+      42            0   -22296.888            0   -6862.1116   -6862.1116 
+      43            0   -25564.353            0   -6876.2812   -6876.2812 
+      44            0   -19389.652            0   -6892.0687   -6892.0687 
+      45            0    -20968.57            0   -6907.9404   -6907.9404 
+      46            0   -22886.551            0   -6925.3839   -6925.3839 
+      47            0   -20842.688            0   -6941.5211   -6941.5211 
+      48            0    -19138.61            0   -6956.4671   -6956.4671 
+      49            0   -26027.487            0   -6969.6982   -6969.6982 
+      50            0   -27816.858           
