@@ -1,0 +1,360 @@
+LAMMPS (20 Nov 2019)
+#---------------------------------------------------------------------#
+#---------- Simulation of Co2Ta1 in triclinic (P1) ----#
+#-------------------- Writer:: Your Name ----------------------------#
+#-------------------- Temperature: 300 Kelvin -----------------------#
+#---------------------------------------------------------------------#
+
+#---------------------Define initial value
+variable              Temperature equal 300     # 300 K
+variable              Pressure    equal 1.01325 # 1.01325 bar
+variable              Timestep    equal 0.001   # 0.001 ps=1 fs::Ref[1]
+
+#-----------------------------------------------------------#
+#----------------------Initialization-----------------------#
+#-----------------------------------------------------------#
+
+#----------------------Define units, atom_style, dimension and boundary
+echo                   both
+units                  metal
+dimension              3
+boundary               p p p
+atom_style             full
+
+#----------------------Define neighbor Algorithm and neighbor list
+neighbor               2.0 bin
+neigh_modify           delay 0 every 1 check yes
+read_data              Co2Ta(C36).data
+  orthogonal box = (0 0 0) to (9.6 9.6 31.2)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  264 atoms
+  scanning bonds ...
+  6 = max bonds/atom
+  reading bonds ...
+  332 bonds
+  6 = max # of 1-2 neighbors
+  27 = max # of 1-3 neighbors
+  125 = max # of 1-4 neighbors
+  46 = max # of special neighbors
+  special bonds CPU = 0.000600936 secs
+  read_data CPU = 0.0019022 secs
+
+#----------------------Define groups for simulation
+group                  Co  type 1
+160 atoms in group Co
+group                  Ta  type 2
+104 atoms in group Ta
+
+#-----------------------------------------------------------------------------------#
+#----------------------Setup interaction potentials between ions--------------------#
+#-----------------------------------------------------------------------------------#
+
+pair_style             meam
+pair_coeff             * * library.meam Co Ta Ta_Co.meam Co Ta
+
+#--------------------------------------------------------------------------------------#
+#----Setting velocity, thermostep, thermo_style, timestep and other necessary setup----#
+#--------------------------------------------------------------------------------------#
+#---------------------Define thermo_style order to chose thermodynamic variable for save
+thermo_style          custom   step  temp   press   ke  pe  etotal
+
+#---------------------Define simulation time step
+timestep              ${Timestep} # time_step=0.001ps=1fs :Ref[1]
+timestep              0.001 
+
+#-----------------------------------------#
+#-------- Minimization protocols ---------#
+#-----------------------------------------#
+dump                   Min all atom 100 CoTa_min.atom
+min_style              cg
+thermo 1  # Print every step during minimization
+minimize               1e-25 1e-25 10000 10000
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:226)
+WARNING: Bonds are defined but no bond style is set (src/force.cpp:205)
+WARNING: Likewise 1-2 special neighbor interactions != 1.0 (src/force.cpp:207)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 7
+  ghost atom cutoff = 7
+  binsize = 3.5, bins = 3 3 9
+  2 neighbor lists, perpetual/occasional/extra = 2 0 0
+  (1) pair meam, perpetual
+      attributes: full, newton on
+      pair build: full/bin
+      stencil: full/bin/3d
+      bin: standard
+  (2) pair meam, perpetual, half/full from (1)
+      attributes: half, newton on
+      pair build: halffull/newton
+      stencil: none
+      bin: none
+Per MPI rank memory allocation (min/avg/max) = 17.4 | 17.4 | 17.4 Mbytes
+Step Temp Press KinEng PotEng TotEng 
+       0            0    2090631.8            0    18304.345    18304.345 
+       1            0    1850131.5            0    17804.877    17804.877 
+       2            0    2369593.8            0     12947.15     12947.15 
+       3            0    2495233.8            0    10046.591    10046.591 
+       4            0    2559955.4            0    8456.8632    8456.8632 
+       5            0    2538305.1            0    6612.7196    6612.7196 
+       6            0    2450017.7            0    4477.8787    4477.8787 
+       7            0    2260941.6            0    2696.7364    2696.7364 
+       8            0    2044468.6            0    1496.7536    1496.7536 
+       9            0    1831802.1            0    663.18763    663.18763 
+      10            0    1662373.9            0    133.19288    133.19288 
+      11            0    1537336.8            0   -198.71092   -198.71092 
+      12            0    1441229.8            0    -410.9153    -410.9153 
+      13            0    1369941.1            0   -553.28721   -553.28721 
+      14            0    1298943.3            0   -661.50731   -661.50731 
+      15            0      1240323            0   -740.54733   -740.54733 
+      16            0    1194666.9            0   -795.92418   -795.92418 
+      17            0    1152206.9            0   -839.51681   -839.51681 
+      18            0    1114014.8            0   -875.20721   -875.20721 
+      19            0    1084508.3            0   -900.88487   -900.88487 
+      20            0    1059977.3            0   -921.42416   -921.42416 
+      21            0    1033192.3            0   -939.93142   -939.93142 
+      22            0    1012043.9            0    -955.9609    -955.9609 
+      23            0    997085.81            0   -967.14889   -967.14889 
+      24            0    968809.75            0   -980.83392   -980.83392 
+      25            0    951763.32            0   -995.22695   -995.22695 
+      26            0    937659.06            0   -1005.4281   -1005.4281 
+      27            0    925657.28            0   -1012.4591   -1012.4591 
+      28            0    915684.54            0   -1019.7123   -1019.7123 
+      29            0    904327.66            0   -1027.2687   -1027.2687 
+      30            0    889617.42            0   -1037.1666   -1037.1666 
+      31            0    869515.98            0    -1049.928    -1049.928 
+      32            0    859487.48            0   -1059.4316   -1059.4316 
+      33            0    845154.02            0   -1068.6221   -1068.6221 
+      34            0    827854.06            0   -1079.1065   -1079.1065 
+      35            0    819317.09            0   -1091.0374   -1091.0374 
+      36            0    795842.75            0   -1100.0816   -1100.0816 
+      37            0    766743.29            0   -1111.9558   -1111.9558 
+      38            0    752001.81            0   -1122.1117   -1122.1117 
+      39            0    747096.48            0   -1130.1628   -1130.1628 
+      40            0    729845.52            0    -1138.835    -1138.835 
+      41            0    721034.76            0   -1144.6764   -1144.6764 
+      42            0    705695.95            0   -1151.8879   -1151.8879 
+      43            0    692483.96            0   -1160.5731   -1160.5731 
+      44            0    685067.61            0   -1165.5908   -1165.5908 
+      45            0    681815.77            0   -1168.6746   -1168.6746 
+      46            0    673854.08            0    -1170.911    -1170.911 
+      47            0    663082.66            0   -1178.2323   -1178.2323 
+      48            0    648920.66            0   -1187.1666   -1187.1666 
+      49            0     645933.5            0   -1190.8599   -1190.8599 
+      50            0    631271.58            0   -1197.7995   -1197.7995 
+      51            0     623495.1            0   -1205.8392   -1205.8392 
+      52            0    618114.45            0   -1209.4494   -1209.4494 
+      53            0    600368.45            0    -1214.868    -1214.868 
+      54            0    586055.25            0   -1221.6925   -1221.6925 
+      55            0    585901.32            0   -1229.7261   -1229.7261 
+      56            0    579315.56            0   -1235.7363   -1235.7363 
+      57            0    570931.58            0   -1241.2043   -1241.2043 
+      58            0    570935.32            0   -1241.3312   -1241.3312 
+      59            0    569890.51            0   -1241.3726   -1241.3726 
+      60            0    569143.27            0   -1242.4654   -1242.4654 
+      61            0    567090.24            0   -1244.8369   -1244.8369 
+      62            0     566216.4            0   -1245.8032   -1245.8032 
+      63            0    564520.69            0   -1247.0592   -1247.0592 
+      64            0    562684.13            0   -1247.2489   -1247.2489 
+      65            0    561908.01            0    -1249.349    -1249.349 
+      66            0    559314.13            0    -1251.556    -1251.556 
+      67            0    557895.81            0   -1251.6988   -1251.6988 
+      68            0     557784.8            0   -1252.0306   -1252.0306 
+      69            0     546986.6            0    -1252.267    -1252.267 
+      70            0    546602.97            0   -1252.5004   -1252.5004 
+      71            0    545232.34            0   -1254.4215   -1254.4215 
+      72            0    542205.42            0   -1256.1389   -1256.1389 
+      73            0    541448.12            0   -1256.2941   -1256.2941 
+      74            0     539828.2            0   -1257.3691   -1257.3691 
+      75            0    539634.71            0   -1257.4798   -1257.4798 
+      76            0    543766.75            0   -1257.9851   -1257.9851 
+      77            0    540089.43            0   -1259.3606   -1259.3606 
+      78            0     541270.7            0   -1259.7655   -1259.7655 
+      79            0    534987.11            0   -1261.9751   -1261.9751 
+      80            0    530086.67            0   -1262.2599   -1262.2599 
+      81            0    531757.02            0   -1262.4733   -1262.4733 
+      82            0    532128.73            0   -1263.2401   -1263.2401 
+      83            0    528824.22            0   -1264.1816   -1264.1816 
+      84            0    528749.67            0   -1264.9778   -1264.9778 
+      85            0    528314.11            0    -1265.553    -1265.553 
+      86            0    526671.93            0    -1266.156    -1266.156 
+      87            0    527212.28            0   -1266.9173   -1266.9173 
+      88            0    526825.69            0   -1266.9406   -1266.9406 
+      89            0    525995.06            0   -1268.4281   -1268.4281 
+      90            0    526742.99            0   -1269.2653   -1269.2653 
+      91            0    518849.74            0   -1269.7371   -1269.7371 
+      92            0    517543.76            0   -1272.0968   -1272.0968 
+      93            0    516844.52            0   -1274.0036   -1274.0036 
+      94            0    508204.64            0   -1274.9078   -1274.9078 
+      95            0    507712.37            0   -1274.9789   -1274.9789 
+      96            0    507883.23            0   -1275.2759   -1275.2759 
+      97            0    504474.63            0   -1280.2224   -1280.2224 
+      98            0    503758.55            0   -1280.3238   -1280.3238 
+      99            0    503666.25            0   -1281.3322   -1281.3322 
+     100            0    503192.21            0   -1282.4039   -1282.4039 
+     101            0     503232.1            0   -1283.4649   -1283.4649 
+     102            0     503156.8            0   -1283.4691   -1283.4691 
+     103            0    501814.83            0   -1283.6551   -1283.6551 
+     104            0    503472.81            0   -1283.8954   -1283.8954 
+     105            0    501211.21            0   -1284.6331   -1284.6331 
+     106            0    500936.15            0    -1284.914    -1284.914 
+     107            0    504555.89            0   -1285.7527   -1285.7527 
+     108            0    500141.12            0   -1287.3822   -1287.3822 
+     109            0     499809.1            0   -1287.5279   -1287.5279 
+     110            0    500899.74            0   -1287.5471   -1287.5471 
+     111            0    505370.48            0   -1286.4803   -1286.4803 
+WARNING: Bond/angle/dihedral extent > half of periodic box length (src/domain.cpp:906)
+Loop time of 2.3967 on 1 procs for 111 steps with 264 atoms
+
+99.9% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = linesearch alpha is zero
+  Energy initial, next-to-last, final = 
+         18304.3448308     -1287.54712277     -1286.48032538
+  Force two-norm initial, final = 42691.2 129.528
+  Force max component initial, final = 7568.6 49.2967
+  Final line search alpha, max atom move = 4.52387e-13 2.23012e-11
+  Iterations, force evaluations = 111 328
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 2.3681     | 2.3681     | 2.3681     |   0.0 | 98.81
+Bond    | 0.00024365 | 0.00024365 | 0.00024365 |   0.0 |  0.01
+Neigh   | 0.0093083  | 0.0093083  | 0.0093083  |   0.0 |  0.39
+Comm    | 0.0044269  | 0.0044269  | 0.0044269  |   0.0 |  0.18
+Output  | 0.0075015  | 0.0075015  | 0.0075015  |   0.0 |  0.31
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.00713    |            |       |  0.30
+
+Nlocal:    264 ave 264 max 264 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:    2118 ave 2118 max 2118 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:    15021 ave 15021 max 15021 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+FullNghs:  30042 ave 30042 max 30042 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 30042
+Ave neighs/atom = 113.795
+Ave special neighs/atom = 17.9167
+Neighbor list builds = 5
+Dangerous builds = 0
+undump                 Min
+reset_timestep	       0
+
+#-------------------------------------------------------------#
+#---- Dynamic stage: Calculation enthalpy in NVT ensemble ----#
+#-------------------------------------------------------------#
+
+#---------------------Set canonical ensemble(NVT) in T=${Temperature}
+fix                   NVT_Equilibrium_Final all nvt temp ${Temperature} ${Temperature} 0.1
+fix                   NVT_Equilibrium_Final all nvt temp 300 ${Temperature} 0.1
+fix                   NVT_Equilibrium_Final all nvt temp 300 300 0.1
+
+#---------------------Save the trajectories with dump command in Equilibrium stage
+dump                  Equilibrium.NVT.Final all atom 100 Equilibrium.NVT.Final.atom
+
+#-----------------------------------------------------#
+#-------------- Calculation enthalpy -----------------#
+#-----------------------------------------------------#
+
+#---------------------Calculation potentials energy per atoms
+compute               Potentials_energy_per_atoms_vector all pe/atom
+variable              PD atom c_Potentials_energy_per_atoms_vector            # PD= Potentials_energy_per_atoms_vector for dump
+compute               Potentials_energy all reduce sum c_Potentials_energy_per_atoms_vector
+variable              N equal "count(all)"
+variable              N1 equal count(Co)
+variable              N2 equal count(Ta)
+variable              n equal 2        # Co_nTa_m
+variable              m equal 1
+compute               ECo Co pe/atom
+compute               ETa Ta pe/atom
+compute               E1 Co reduce sum c_ECo
+compute               E2 Ta reduce sum c_ETa
+variable              Potentials_energy_per_atoms_scaller equal "c_Potentials_energy/v_N"
+variable              Totenergy equal etotal                               #Kinetic+Potentials
+
+#---------------------Calculation Temperature
+compute               TEMPERATURE all   temp
+variable              TEMPERATURE equal "c_TEMPERATURE"
+
+#---------------------Calculation formation Energy and heat of formation
+variable              lengtha equal "lx/3"
+variable              lengthc equal "lz/3"
+variable              EcCo equal -4.41  	 #Cohesive energy of Co
+variable              EcTa equal -8.09           #Cohesive energy of Ta
+variable              Etot equal v_Totenergy/v_N
+variable              formation_energy equal -(v_Etot-v_n*v_EcCo-v_m*v_EcTa)/(22*(v_n+v_m))
+variable              heat_formation equal (v_Etot*v_N-v_N1*c_E1-v_N2*c_E2)/(v_N)
+thermo_style          custom step temp press etotal v_Etot c_E1 c_E2 v_formation_energy v_heat_formation v_lengtha v_lengthc
+thermo 500  # Print every step during dynamics
+
+#---------------------Dynamic run
+run                   10000 # 1 ps
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:226)
+WARNING: Bonds are defined but no bond style is set (src/force.cpp:205)
+WARNING: Likewise 1-2 special neighbor interactions != 1.0 (src/force.cpp:207)
+WARNING: Bond/angle/dihedral extent > half of periodic box length (src/domain.cpp:906)
+Per MPI rank memory allocation (min/avg/max) = 16.27 | 16.27 | 16.27 Mbytes
+Step Temp Press TotEng v_Etot c_E1 c_E2 v_formation_energy v_heat_formation v_lengtha v_lengthc 
+       0            0    482890.08   -1283.6819   -4.8624313   -476.36423   -807.31763  -0.18253892    601.87738          3.2         10.4 
+     500    861.05109    446270.12   -1314.3037   -4.9784233   -481.71256   -861.86298  -0.18078147    626.49036          3.2         10.4 
+    1000    804.76561    428818.45   -1323.2952   -5.0124818   -484.20738   -866.44615  -0.18026543    629.77381          3.2         10.4 
+    1500    659.53542    375098.06   -1356.3153   -5.1375581   -495.14721   -883.58931  -0.17837033     643.0323          3.2         10.4 
+    2000    517.68393    378266.44    -1367.818   -5.1811288   -493.85446   -891.56244  -0.17771017    645.34617          3.2         10.4 
+    2500    1302.6035    388400.47   -1326.5871   -5.0249512   -490.03258   -880.83708   -0.1800765    638.96092          3.2         10.4 
+    3000     1248.637    384974.62   -1331.3679   -5.0430601    -488.0437   -885.77212  -0.17980212    639.68153          3.2         10.4 
+    3500    689.01103    360427.58   -1358.8413   -5.1471262   -495.97646   -886.28808  -0.17822536    644.58846          3.2         10.4 
+    4000    499.53843    361347.83   -1368.6284   -5.1841986   -496.32886   -889.28158  -0.17766366    645.94422          3.2         10.4 
+    4500    708.33512    377697.62   -1355.5837   -5.1347869   -493.59633   -886.06755  -0.17841232    643.07142          3.2         10.4 
+    5000     535.5156    368558.76   -1365.4194   -5.1720433    -495.2488    -888.3757  -0.17784783    644.94493          3.2         10.4 
+    5500    456.18539    357093.12    -1373.651   -5.2032233   -498.21885   -890.94031   -0.1773754    647.72408          3.2         10.4 
+    6000     1541.166    397284.07   -1298.5343   -4.9186905   -489.46197   -861.46491  -0.18168651    631.08989          3.2         10.4 
+    6500    401.58385    375236.34   -1369.5287   -5.1876088   -494.59503    -888.5857  -0.17761199    644.61587          3.2         10.4 
+    7000     497.3696    361053.34   -1365.9925   -5.1742141   -494.61972   -888.28108  -0.17781494    644.52422          3.2         10.4 
+    7500     7149.856    439725.95   -1142.4584   -4.3274939    -495.5566   -889.96414  -0.19064403    646.60177          3.2         10.4 
+    8000    805.60679    398863.09   -1326.8851   -5.0260798   -488.18554   -866.08647   -0.1800594    632.02952          3.2         10.4 
+    8500      743.834    397466.36   -1349.6343    -5.112251   -494.47516   -880.44606  -0.17875377    641.41205          3.2         10.4 
+    9000    730.38752    402085.29   -1345.5644   -5.0968348   -492.22889   -878.16532  -0.17898735    639.16762          3.2         10.4 
+    9500    463.89717    379802.41   -1363.7209   -5.1656093   -495.39589   -884.09535  -0.17794531    643.35431          3.2         10.4 
+   10000    669.69502    412522.52   -1335.6791   -5.0593907   -489.95989   -868.48581  -0.17955469    634.01677          3.2         10.4 
+WARNING: Bond/angle/dihedral extent > half of periodic box length (src/domain.cpp:906)
+Loop time of 52.7682 on 1 procs for 10000 steps with 264 atoms
+
+Performance: 16.373 ns/day, 1.466 hours/ns, 189.508 timesteps/s
+100.0% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 52.238     | 52.238     | 52.238     |   0.0 | 99.00
+Bond    | 0.0018085  | 0.0018085  | 0.0018085  |   0.0 |  0.00
+Neigh   | 0.3834     | 0.3834     | 0.3834     |   0.0 |  0.73
+Comm    | 0.066964   | 0.066964   | 0.066964   |   0.0 |  0.13
+Output  | 0.021567   | 0.021567   | 0.021567   |   0.0 |  0.04
+Modify  | 0.040116   | 0.040116   | 0.040116   |   0.0 |  0.08
+Other   |            | 0.01609    |            |       |  0.03
+
+Nlocal:    264 ave 264 max 264 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:    2096 ave 2096 max 2096 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:    15108 ave 15108 max 15108 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+FullNghs:  30216 ave 30216 max 30216 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 30216
+Ave neighs/atom = 114.455
+Ave special neighs/atom = 17.9167
+Neighbor list builds = 258
+Dangerous builds = 4
+
+#--------------------Print flag order to show simulation is successful
+print                "SIMULATION IS SUCCESSFUL DONE"
+SIMULATION IS SUCCESSFUL DONE
+Total wall time: 0:00:55

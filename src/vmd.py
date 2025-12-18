@@ -8,10 +8,6 @@ def create_vmd_script(xyz_path, output_dir, lattice_a, lattice_b, lattice_c):
 mol new "{xyz_path}" type xyz
 cd "{output_dir}"
 
-topo retypebonds
-topo guessangles  
-topo guessdihedrals
-
 molinfo top set a {lattice_a}
 molinfo top set b {lattice_b}
 molinfo top set c {lattice_c}

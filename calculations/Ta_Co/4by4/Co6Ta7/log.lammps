@@ -1,0 +1,251 @@
+LAMMPS (20 Nov 2019)
+#---------------------------------------------------------------------#
+#---------- Simulation of Co6Ta7 in triclinic (P1) ----#
+#-------------------- Writer:: Your Name ----------------------------#
+#-------------------- Temperature: 300 Kelvin -----------------------#
+#---------------------------------------------------------------------#
+
+#---------------------Define initial value
+variable              Temperature equal 300     # 300 K
+variable              Pressure    equal 1.01325 # 1.01325 bar
+variable              Timestep    equal 0.001   # 0.001 ps=1 fs::Ref[1]
+
+#-----------------------------------------------------------#
+#----------------------Initialization-----------------------#
+#-----------------------------------------------------------#
+
+#----------------------Define units, atom_style, dimension and boundary
+echo                   both
+units                  metal
+dimension              3
+boundary               p p p
+atom_style             full
+
+#----------------------Define neighbor Algorithm and neighbor list
+neighbor               2.0 bin
+neigh_modify           delay 0 every 1 check yes
+read_data              Co6Ta7.data
+  orthogonal box = (-0.042565 -0.042565 -0.206451) to (19.7574 19.7574 105.594)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  2496 atoms
+  scanning bonds ...
+  4 = max bonds/atom
+  reading bonds ...
+  808 bonds
+  4 = max # of 1-2 neighbors
+  3 = max # of 1-3 neighbors
+  3 = max # of 1-4 neighbors
+  4 = max # of special neighbors
+  special bonds CPU = 0.000419007 secs
+  read_data CPU = 0.00280621 secs
+
+#----------------------Define groups for simulation
+group                  Co  type 1
+1344 atoms in group Co
+group                  Ta  type 2
+1152 atoms in group Ta
+
+#-----------------------------------------------------------------------------------#
+#----------------------Setup interaction potentials between ions--------------------#
+#-----------------------------------------------------------------------------------#
+
+pair_style             meam
+pair_coeff             * * library.meam Co Ta Ta_Co.meam Co Ta
+
+#--------------------------------------------------------------------------------------#
+#----Setting velocity, thermostep, thermo_style, timestep and other necessary setup----#
+#--------------------------------------------------------------------------------------#
+#---------------------Define thermo_style order to chose thermodynamic variable for save
+thermo_style          custom   step  temp   press   ke  pe  etotal
+
+#---------------------Define simulation time step
+timestep              ${Timestep} # time_step=0.001ps=1fs :Ref[1]
+timestep              0.001 
+
+#-----------------------------------------#
+#-------- Minimization protocols ---------#
+#-----------------------------------------#
+dump                   Min all atom 100 CoTa_min.atom
+min_style              cg
+thermo 50  # Print every step during minimization
+minimize               1e-25 1e-25 10000 10000
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:226)
+WARNING: Bonds are defined but no bond style is set (src/force.cpp:205)
+WARNING: Likewise 1-2 special neighbor interactions != 1.0 (src/force.cpp:207)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 7
+  ghost atom cutoff = 7
+  binsize = 3.5, bins = 6 6 31
+  2 neighbor lists, perpetual/occasional/extra = 2 0 0
+  (1) pair meam, perpetual
+      attributes: full, newton on
+      pair build: full/bin
+      stencil: full/bin/3d
+      bin: standard
+  (2) pair meam, perpetual, half/full from (1)
+      attributes: half, newton on
+      pair build: halffull/newton
+      stencil: none
+      bin: none
+Per MPI rank memory allocation (min/avg/max) = 18.98 | 18.98 | 18.98 Mbytes
+Step Temp Press KinEng PotEng TotEng 
+       0            0    103467.28            0   -11999.628   -11999.628 
+      50            0   -40748.752            0   -13577.944   -13577.944 
+     100            0   -32824.476            0   -13755.235   -13755.235 
+     150            0   -31057.448            0   -13835.657   -13835.657 
+     192            0   -30540.158            0   -13845.691   -13845.691 
+Loop time of 22.6525 on 1 procs for 192 steps with 2496 atoms
+
+100.0% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+         -11999.627626     -13845.6908397     -13845.6908397
+  Force two-norm initial, final = 134.237 24.6388
+  Force max component initial, final = 3.80202 9.78893
+  Final line search alpha, max atom move = 0.000319238 0.003125
+  Iterations, force evaluations = 192 619
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 22.562     | 22.562     | 22.562     |   0.0 | 99.60
+Bond    | 0.0002478  | 0.0002478  | 0.0002478  |   0.0 |  0.00
+Neigh   | 0.040308   | 0.040308   | 0.040308   |   0.0 |  0.18
+Comm    | 0.0179     | 0.0179     | 0.0179     |   0.0 |  0.08
+Output  | 0.0017299  | 0.0017299  | 0.0017299  |   0.0 |  0.01
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.03032    |            |       |  0.13
+
+Nlocal:    2496 ave 2496 max 2496 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:    5653 ave 5653 max 5653 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:    103680 ave 103680 max 103680 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+FullNghs:  207360 ave 207360 max 207360 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 207360
+Ave neighs/atom = 83.0769
+Ave special neighs/atom = 1.33734
+Neighbor list builds = 5
+Dangerous builds = 0
+undump                 Min
+reset_timestep	       0
+
+#-------------------------------------------------------------#
+#---- Dynamic stage: Calculation enthalpy in NVT ensemble ----#
+#-------------------------------------------------------------#
+
+#---------------------Set canonical ensemble(NVT) in T=${Temperature}
+fix                   NVT_Equilibrium_Final all nvt temp ${Temperature} ${Temperature} 0.1
+fix                   NVT_Equilibrium_Final all nvt temp 300 ${Temperature} 0.1
+fix                   NVT_Equilibrium_Final all nvt temp 300 300 0.1
+
+#---------------------Save the trajectories with dump command in Equilibrium stage
+dump                  Equilibrium.NVT.Final all atom 100 Equilibrium.NVT.Final.atom
+
+#-----------------------------------------------------#
+#-------------- Calculation enthalpy -----------------#
+#-----------------------------------------------------#
+
+#---------------------Calculation potentials energy per atoms
+compute               Potentials_energy_per_atoms_vector all pe/atom
+variable              PD atom c_Potentials_energy_per_atoms_vector            # PD= Potentials_energy_per_atoms_vector for dump
+compute               Potentials_energy all reduce sum c_Potentials_energy_per_atoms_vector
+variable              N equal "count(all)"
+variable              N1 equal count(Co)
+variable              N2 equal count(Ta)
+variable              n equal 6        # Co_nTa_m
+variable              m equal 7
+compute               ECo Co pe/atom
+compute               ETa Ta pe/atom
+compute               E1 Co reduce sum c_ECo
+compute               E2 Ta reduce sum c_ETa
+variable              Potentials_energy_per_atoms_scaller equal "c_Potentials_energy/v_N"
+variable              Totenergy equal etotal                               #Kinetic+Potentials
+
+#---------------------Calculation Temperature
+compute               TEMPERATURE all   temp
+variable              TEMPERATURE equal "c_TEMPERATURE"
+
+#---------------------Calculation formation Energy and heat of formation
+variable              lengtha equal "lx/4"
+variable              lengthc equal "lz/4"
+variable              EcCo equal -4.41  	 #Cohesive energy of Co
+variable              EcTa equal -8.09           #Cohesive energy of Ta
+variable              Etot equal v_Totenergy/v_N
+variable              formation_energy equal -(v_Etot-v_n*v_EcCo-v_m*v_EcTa)/(22*(v_n+v_m))
+variable              heat_formation equal (v_Etot*v_N-v_N1*c_E1-v_N2*c_E2)/(v_N)
+thermo_style          custom step temp press etotal v_Etot c_E1 c_E2 v_formation_energy v_heat_formation v_lengtha v_lengthc
+thermo 500  # Print every step during dynamics
+
+#---------------------Dynamic run
+run                   10000 # 1 ps
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:226)
+WARNING: Bonds are defined but no bond style is set (src/force.cpp:205)
+WARNING: Likewise 1-2 special neighbor interactions != 1.0 (src/force.cpp:207)
+Per MPI rank memory allocation (min/avg/max) = 17.86 | 17.86 | 17.86 Mbytes
+Step Temp Press TotEng v_Etot c_E1 c_E2 v_formation_energy v_heat_formation v_lengtha v_lengthc 
+       0            0   -33463.693   -13794.098   -5.5264817   -4729.6422   -9064.4562  -0.27120111    6724.7991    4.9499997    26.450001 
+     500    398.41874   -4329.7724   -13811.355   -5.5333956   -4752.7193   -9187.1279  -0.27117694     6793.836    4.9499997    26.450001 
+    1000    356.55195    1586.1216   -13956.938   -5.5917218   -4794.0942   -9277.8329    -0.270973    6857.9204    4.9499997    26.450001 
+    1500    314.03799    2379.6955   -14031.213   -5.6214797   -4815.1579   -9317.3341  -0.27086895    6887.4639    4.9499997    26.450001 
+    2000    304.48306    2895.8882   -14085.078   -5.6430601   -4828.7785   -9354.4966   -0.2707935    6911.9284    4.9499997    26.450001 
+    2500     302.3947    4564.0987   -14117.019   -5.6558571   -4841.2446   -9373.2982  -0.27074875    6927.3058    4.9499997    26.450001 
+    3000    301.75107    4345.9019   -14144.392   -5.6668238   -4847.4108   -9394.2974  -0.27071041     6940.307    4.9499997    26.450001 
+    3500    300.27187    5491.6755   -14157.166   -5.6719416   -4857.1617   -9396.8434  -0.27069251    6946.7275    4.9499997    26.450001 
+    4000    298.83912     6768.514   -14171.836   -5.6778187   -4859.4033   -9408.8091  -0.27067196    6953.4512    4.9499997    26.450001 
+    4500    300.85286    7130.5201   -14187.626    -5.684145   -4867.6304   -9417.0218  -0.27064984    6961.6654    4.9499997    26.450001 
+    5000    297.80484     9279.271   -14198.222   -5.6883903   -4867.1759   -9427.0896    -0.270635    6966.0631    4.9499997    26.450001 
+    5500    298.59256    9390.1386   -14210.778   -5.6934208   -4870.5051   -9436.5706  -0.27061741    6972.2265    4.9499997    26.450001 
+    6000    304.44165    10522.841   -14208.804   -5.6926297   -4871.1409   -9435.8465  -0.27062018    6972.2355    4.9499997    26.450001 
+    6500    308.99217    8534.9674   -14217.567   -5.6961408   -4874.6234   -9442.5952   -0.2706079    6977.2219    4.9499997    26.450001 
+    7000    301.46806    8482.0129   -14217.332   -5.6960463   -4873.1222    -9441.434  -0.27060823    6975.8777    4.9499997    26.450001 
+    7500    303.60897    10216.542   -14223.815   -5.6986437   -4873.9627   -9447.7672  -0.27059915    6979.2507    4.9499997    26.450001 
+    8000    297.32119    11816.565   -14235.107   -5.7031679   -4876.3614   -9454.6328  -0.27058333    6983.7066    4.9499997    26.450001 
+    8500    298.80447    9903.3407   -14236.824   -5.7038557    -4876.122   -9457.0676  -0.27058092    6984.7007    4.9499997    26.450001 
+    9000    299.44759    11554.344   -14238.253   -5.7044285   -4876.2779   -9458.5486  -0.27057892    6985.4676    4.9499997    26.450001 
+    9500    308.05418    10976.215   -14243.287   -5.7064449   -4879.1282   -9463.5071  -0.27057187    6989.2889    4.9499997    26.450001 
+   10000    303.77603    10818.126   -14248.165   -5.7083994   -4876.7526   -9469.3813  -0.27056504     6990.719    4.9499997    26.450001 
+WARNING: Bond/angle/dihedral extent > half of periodic box length (src/domain.cpp:906)
+Loop time of 369.262 on 1 procs for 10000 steps with 2496 atoms
+
+Performance: 2.340 ns/day, 10.257 hours/ns, 27.081 timesteps/s
+100.0% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 367.77     | 367.77     | 367.77     |   0.0 | 99.60
+Bond    | 0.0038104  | 0.0038104  | 0.0038104  |   0.0 |  0.00
+Neigh   | 0.56675    | 0.56675    | 0.56675    |   0.0 |  0.15
+Comm    | 0.29745    | 0.29745    | 0.29745    |   0.0 |  0.08
+Output  | 0.16223    | 0.16223    | 0.16223    |   0.0 |  0.04
+Modify  | 0.35021    | 0.35021    | 0.35021    |   0.0 |  0.09
+Other   |            | 0.1138     |            |       |  0.03
+
+Nlocal:    2496 ave 2496 max 2496 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:    5740 ave 5740 max 5740 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:    104481 ave 104481 max 104481 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+FullNghs:  208962 ave 208962 max 208962 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 208962
+Ave neighs/atom = 83.7188
+Ave special neighs/atom = 1.33734
+Neighbor list builds = 71
+Dangerous builds = 0
+
+#--------------------Print flag order to show simulation is successful
+print                "SIMULATION IS SUCCESSFUL DONE"
+SIMULATION IS SUCCESSFUL DONE
+Total wall time: 0:06:32

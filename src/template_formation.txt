@@ -50,7 +50,7 @@ timestep              ${Timestep} # time_step=0.001ps=1fs :Ref[1]
 #-----------------------------------------#
 dump                   Min all atom 100 {ELEMENT1}{ELEMENT2}_min.atom
 min_style              cg  
-thermo 1  # Print every step during minimization
+thermo 50  # Print every step during minimization
 minimize               1e-25 1e-25 10000 10000
 undump                 Min
 reset_timestep	       0
@@ -76,8 +76,8 @@ compute               Potentials_energy all reduce sum c_Potentials_energy_per_a
 variable              N equal "count(all)"
 variable              N1 equal count({ELEMENT1})
 variable              N2 equal count({ELEMENT2}) 
-variable              n equal 1        # {ELEMENT1}_n{ELEMENT2}_m
-variable              m equal 2
+variable              n equal {N_ELEMENT1}        # {ELEMENT1}_n{ELEMENT2}_m
+variable              m equal {M_ELEMENT2}
 compute               E{ELEMENT1} {ELEMENT1} pe/atom
 compute               E{ELEMENT2} {ELEMENT2} pe/atom
 compute               E1 {ELEMENT1} reduce sum c_E{ELEMENT1}
@@ -90,15 +90,15 @@ compute               TEMPERATURE all   temp
 variable              TEMPERATURE equal "c_TEMPERATURE" 
 
 #---------------------Calculation formation Energy and heat of formation
-variable              lengtha equal "lx/3"
-variable              lengthc equal "lz/3"
+variable              lengtha equal "lx/{DIMENSION}"
+variable              lengthc equal "lz/{DIMENSION}"
 variable              Ec{ELEMENT1} equal {COHESIVE_E1}  	 #Cohesive energy of {ELEMENT1}
 variable              Ec{ELEMENT2} equal {COHESIVE_E2}           #Cohesive energy of {ELEMENT2}
 variable              Etot equal v_Totenergy/v_N
-variable              formation_energy equal -(v_Etot-v_n*v_Ec{ELEMENT1}-v_m*v_Ec{ELEMENT2})/(22*(v_n+v_m))
+variable              formation_energy equal -(v_Etot-v_n*v_Ec{ELEMENT1}-v_m*v_Ec{ELEMENT2})/({COEF}*(v_n+v_m))
 variable              heat_formation equal (v_Etot*v_N-v_N1*c_E1-v_N2*c_E2)/(v_N)
 thermo_style          custom step temp press etotal v_Etot c_E1 c_E2 v_formation_energy v_heat_formation v_lengtha v_lengthc 
-thermo 1  # Print every step during dynamics
+thermo 500  # Print every step during dynamics
 
 #---------------------Dynamic run
 run                   10000 # 1 ps
